@@ -13,12 +13,12 @@
 #include "Point.hpp"
 #include "Region.hpp"
 #include "Size.hpp"
-
 #include <iostream>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
+#include "Particle.hpp"
 
 namespace Messaging
 {
@@ -55,7 +55,7 @@ namespace Model
 			 *
 			 */
 			Robot(	const std::string& aName,
-					const wxPoint& aPosition);
+					const wxPoint& aPosition, uint16_t particleCount = 1000);
 			/**
 			 *
 			 */
@@ -255,12 +255,25 @@ namespace Model
 			// Radar
 			PointCloud currentRadarPointCloud; // The latest radar point cloud
 			//@}
+			// Lidar
+			PointCloud currentLidarPointCloud;
+			/**
+			 * @brief returns the particles vector
+			 * 
+			 * @return std::vector<Particle>& 
+			 */
+			std::vector<Particle> getParticles() const;
 
 		protected:
 			/**
 			 *
 			 */
 			void drive();
+			/**
+			 * @brief draws all particles in the particles attribute.
+			 * 
+			 */
+			void drawParticles();
 			/**
 			 *
 			 */
@@ -330,6 +343,7 @@ namespace Model
 			 *
 			 */
 			Messaging::ServerPtr server;
+			std::vector<Particle> particles;
 	};
 } // namespace Model
 #endif // ROBOT_HPP_

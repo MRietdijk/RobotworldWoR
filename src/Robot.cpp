@@ -14,11 +14,13 @@
 #include "Shape2DUtils.hpp"
 #include "Wall.hpp"
 #include "WayPoint.hpp"
+#include "Lidar.hpp"
 
 #include <chrono>
 #include <ctime>
 #include <sstream>
 #include <thread>
+#include <random>
 
 namespace Model
 {
@@ -38,7 +40,7 @@ namespace Model
 	 *
 	 */
 	Robot::Robot(	const std::string& aName,
-					const wxPoint& aPosition) :
+					const wxPoint& aPosition, uint16_t particleCount /* = 1000 */) :
 								name( aName),
 								size( wxDefaultSize),
 								position( aPosition),
@@ -49,10 +51,20 @@ namespace Model
 								communicating(false)
 	{
 		std::shared_ptr< AbstractSensor > laserSensor = std::make_shared<LaserDistanceSensor>( *this);
+		std::shared_ptr< AbstractSensor> lidar = std::make_shared<Lidar>(*this, 10, 180);
 		attachSensor( laserSensor);
+		attachSensor(lidar);
 
 		// We use the real position for starters, not an estimated position.
 		startPosition = position;
+
+		// make count of particles
+		for (uint16_t i = 0; i < particleCount; ++i) {
+			// 900 is the size of the world
+			Particle p(900, 900);
+
+			particles.push_back(p);
+		}
 	}
 	/**
 	 *
@@ -450,15 +462,18 @@ namespace Model
 			while (position.x > 0 && position.x < 900 && position.y > 0 && position.y < 900 && pathPoint < path.size()) // @suppress("Avoid magic numbers")
 			{
 				// Do the update
+				currentLidarPointCloud.clear();
 				const PathAlgorithm::Vertex& vertex = path[pathPoint+=static_cast<unsigned int>(speed)];
 				front = BoundedVector( vertex.asPoint(), position);
 				position.x = vertex.x;
 				position.y = vertex.y;
 
+
 				// Do the measurements / handle all percepts
 				// TODO There are race conditions here:
 				//			1. size() is not atomic
 				//			2. any percepts added after leaving the while will not be used during the belief update
+				particleWeightType robotWeight = 0;
 				while(perceptQueue.size() > 0)
 				{
 					std::optional< std::shared_ptr< AbstractPercept >> percept = perceptQueue.dequeue();
@@ -472,7 +487,14 @@ namespace Model
 						{
 							DistancePercept* distancePercept = dynamic_cast<DistancePercept*>(percept.value().get());
 							currentRadarPointCloud.push_back(*distancePercept);
-						}else
+						} else if (typeid(tempAbstractPercept) == typeid(DistancePercepts)) {
+							DistancePercepts* distancePercepts = dynamic_cast<DistancePercepts*>(percept.value().get());
+							for (DistancePercept distancePercept : distancePercepts->pointCloud) {
+								robotWeight += Utils::Shape2DUtils::distance(position, distancePercept.point);
+								currentLidarPointCloud.push_back(distancePercept);
+							}
+						}
+						else
 						{
 							Application::Logger::log(std::string("Unknown type of percept:") + typeid(tempAbstractPercept).name());
 						}
@@ -481,9 +503,62 @@ namespace Model
 						Application::Logger::log("Huh??");
 					}
 				}
-
+				uint64_t totalWeight = 0;
 				// Update the belief
 
+
+				std::vector<Particle> newParticles;
+				for (Particle& p : particles) {
+					p.updateWeight(robotWeight);
+					totalWeight += p.getWeight();
+					std::cout << "total weight: " << totalWeight << std::endl;
+				}
+				
+				std::sort(particles.begin(), particles.end());
+
+				for (uint16_t i = 0; i < particles.size(); ++i) {
+					particleWeightType weight = particles.at(i).getWeight();
+					particles.at(i).setWeight(particles.at(particles.size() - i - 1).getWeight());
+					particles.at(particles.size() - i - 1).setWeight(weight);
+				}
+
+				for (Particle& p : particles) {
+					std::cout << "Particle with correct weight: " << p.to_string() << std::endl;
+				}
+
+
+				for (uint16_t i = 0; i < 10; ++i) {
+					std::cout << "total weight: " << totalWeight << std::endl;
+					std::random_device rd{};
+					std::mt19937 gen{rd()};
+					std::uniform_int_distribution<> pickedWeight{0, totalWeight};
+					
+
+
+
+					uint64_t picked = pickedWeight(gen);
+
+					uint64_t weightSum = 0;
+
+					for (uint16_t i = 0; i < particles.size(); ++i) {
+						Particle& p = particles[i];
+						weightSum += p.getWeight();
+						if (weightSum >= picked) {
+							std::cout << "Getting Particle: " << p.to_string() << std::endl;
+							newParticles.push_back(p);
+							totalWeight -= p.getWeight();
+							particles.erase(i + particles.begin());
+							break;
+						}
+					}
+				}
+
+				particles = newParticles;
+
+
+				// Resample
+
+				
 				// Stop on arrival or collision
 				if (arrived(goal) || collision())
 				{
@@ -583,6 +658,10 @@ namespace Model
 			}
 		}
 		return false;
+	}
+
+	std::vector<Particle> Robot::getParticles() const {
+		return this->particles;
 	}
 
 } // namespace Model

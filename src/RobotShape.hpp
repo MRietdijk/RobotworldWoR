@@ -118,6 +118,8 @@ namespace View
 			{
 				robotWorldCanvas = aRobotWorldCanvas;
 			}
+
+			void drawParticles(wxDC& dc);
 		protected:
 
 		private:
