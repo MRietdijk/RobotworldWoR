@@ -10,7 +10,8 @@ typedef uint32_t particleWeightType;
 class Particle
 {
 public:
-    Particle(uint16_t maxX, uint16_t maxY);
+    Particle();
+    Particle(uint16_t x, uint16_t y);
     Particle(const Particle& other);
     ~Particle();
     void draw(wxDC& dc);
@@ -19,6 +20,8 @@ public:
     std::string to_string();
     bool operator<(const Particle& other) const;
     void setWeight(particleWeightType weight);
+    uint16_t getX() const;
+    uint16_t getY() const;
 private:
     friend std::ostream& operator<<(std::ostream&, Particle&);
     uint16_t x;

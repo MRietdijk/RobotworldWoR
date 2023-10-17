@@ -60,8 +60,7 @@ namespace Model
 
 		// make count of particles
 		for (uint16_t i = 0; i < particleCount; ++i) {
-			// 900 is the size of the world
-			Particle p(900, 900);
+			Particle p;
 
 			particles.push_back(p);
 		}
@@ -516,10 +515,14 @@ namespace Model
 				
 				std::sort(particles.begin(), particles.end());
 
-				for (uint16_t i = 0; i < particles.size(); ++i) {
-					particleWeightType weight = particles.at(i).getWeight();
-					particles.at(i).setWeight(particles.at(particles.size() - i - 1).getWeight());
-					particles.at(particles.size() - i - 1).setWeight(weight);
+				for (Particle& p : particles) {
+					std::cout << "Particle without correct weight: " << p.to_string() << std::endl;
+				}
+
+				for (uint16_t i = 0; i < particles.size() / 2; ++i) {
+					particleWeightType weight = particles[i].getWeight();
+					particles[i].setWeight(particles[particles.size() - i - 1].getWeight());
+					particles[particles.size() - i - 1].setWeight(weight);
 				}
 
 				for (Particle& p : particles) {
@@ -527,7 +530,7 @@ namespace Model
 				}
 
 
-				for (uint16_t i = 0; i < 10; ++i) {
+				for (uint16_t i = 0; i < particles.size() / 8; ++i) {
 					std::cout << "total weight: " << totalWeight << std::endl;
 					std::random_device rd{};
 					std::mt19937 gen{rd()};
@@ -553,8 +556,25 @@ namespace Model
 					}
 				}
 
+				for (Particle& p : newParticles) {
+					for (uint8_t i = 0; i < 8; ++i) {
+						std::random_device rd{};
+						std::mt19937 gen{rd()};
+						std::uniform_int_distribution<> xDist{-10, 10};
+						std::uniform_int_distribution<> yDist{-10 , 10};
+
+						uint16_t x = p.getX() + xDist(gen);
+						uint16_t y = p.getY() + yDist(gen);
+						
+						Particle newParticle(x, y);
+						newParticles.push_back(newParticle);
+					}
+				}
 				particles = newParticles;
 
+				for (Particle& p : particles) {
+					p.updateWeight(robotWeight);
+				}
 
 				// Resample
 

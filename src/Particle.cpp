@@ -6,7 +6,11 @@
 #include "Lidar.hpp"
 #include "Shape2DUtils.hpp"
 
-Particle::Particle(uint16_t maxX, uint16_t maxY) : x(std::rand() % maxX), y(std::rand() % maxY), weight(0)
+Particle::Particle() : x(std::rand() % 900), y(std::rand() % 900), weight(0)
+{
+}
+
+Particle::Particle(uint16_t x, uint16_t y) : x(x), y(y), weight(0)
 {
 }
 
@@ -21,6 +25,10 @@ Particle::~Particle()
 void Particle::draw(wxDC& dc) {
   dc.SetBrush(*wxGREEN_BRUSH);
   dc.SetPen( wxPen(  "GREEN", 2, wxPENSTYLE_SOLID));
+  if (weight >= 25000) {
+    dc.SetBrush(*wxRED_BRUSH);
+    dc.SetPen( wxPen(  "RED", 2, wxPENSTYLE_SOLID));  
+  }
   dc.DrawCircle(x, y, 3);
 }
 
@@ -32,7 +40,7 @@ void Particle::updateWeight(particleWeightType robotWeight) {
   const Model::AbstractPercept& tempPercepts{*percepts.get()};
   if (typeid(tempPercepts) == typeid(Model::DistancePercepts)) {
     Model::DistancePercepts* distancePercepts = dynamic_cast<Model::DistancePercepts*>(percepts.get());
-    for (Model::DistancePercept distancePercept : distancePercepts->pointCloud) {
+    for (Model::DistancePercept& distancePercept : distancePercepts->pointCloud) {
       tempWeight += Utils::Shape2DUtils::distance(currPos, distancePercept.point);
     }
   }
@@ -43,7 +51,7 @@ void Particle::updateWeight(particleWeightType robotWeight) {
 }
 
 bool Particle::operator<(const Particle& other) const {
-  return weight > other.weight;
+  return weight < other.weight;
 }
 
 std::string Particle::to_string() {
@@ -60,4 +68,12 @@ particleWeightType Particle::getWeight() const {
 
 void Particle::setWeight(particleWeightType weight) {
   this->weight = weight;
+}
+
+uint16_t Particle::getX() const {
+  return this->x;
+}
+
+uint16_t Particle::getY() const {
+  return this->y;
 }

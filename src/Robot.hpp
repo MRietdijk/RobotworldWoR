@@ -55,7 +55,7 @@ namespace Model
 			 *
 			 */
 			Robot(	const std::string& aName,
-					const wxPoint& aPosition, uint16_t particleCount = 1000);
+					const wxPoint& aPosition, uint16_t particleCount = 100);
 			/**
 			 *
 			 */
