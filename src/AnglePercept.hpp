@@ -8,6 +8,7 @@ namespace Model {
     class AnglePercept: public AbstractPercept
     {
     public:
+        AnglePercept() : angle(0) {};
         AnglePercept(double angle) : angle(angle) {};
         double angle;
 

@@ -19,6 +19,7 @@
 #include <string>
 #include <thread>
 #include "Particle.hpp"
+#include "AnglePercept.hpp"
 
 namespace Messaging
 {
@@ -260,6 +261,8 @@ namespace Model
 			//@}
 			// Lidar
 			PointCloud currentLidarPointCloud;
+
+			AnglePercept currentDegree;
 			/**
 			 * @brief returns the particles vector
 			 * 
