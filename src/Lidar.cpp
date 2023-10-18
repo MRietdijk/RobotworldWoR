@@ -85,6 +85,9 @@ namespace Model{
             if (distance != noDistance) {
                 DistanceStimulus stimulus(angle, distance);
                 stimuli.push_back(stimulus);
+            } else {
+                DistanceStimulus stimulus(angle, maxLenghtBeam);
+                stimuli.push_back(stimulus);
             }
         }
 

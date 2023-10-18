@@ -261,7 +261,6 @@ namespace View
 				dc.DrawCircle( d.point, 1);
 			}
 		}
-
 		for (const Model::DistancePercept &d : getRobot()->currentLidarPointCloud)
 		{
 			dc.SetPen( wxPen(  "Yellow", borderWidth, wxPENSTYLE_SOLID));
