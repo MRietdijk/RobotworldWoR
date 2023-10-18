@@ -502,6 +502,14 @@ namespace Application
 					wxGROW);
 		sizer->AddGrowableCol( 4);
 
+		sizer->Add(makeCheckbox(panel, 
+								"Use Particle filter and lidar",
+								[this](wxCommandEvent& anEvent){this->OnParticleFilter(anEvent);}
+		),
+		wxGBPosition(5, 4),
+		wxGBSpan(1, 1),
+		wxGROW);
+
 		panel->SetSizerAndFit( sizer);
 
 		if(MainApplication::isArgGiven("-debug_grid"))
@@ -752,6 +760,14 @@ namespace Application
 		if (robot)
 		{
 			robot->stopCommunicating();
+		}
+	}
+
+	void MainFrameWindow::OnParticleFilter( wxCommandEvent& UNUSEDPARAM(anEvent)) {
+		Model::RobotPtr robot = Model::RobotWorld::getRobotWorld().getRobot( "Robot");
+		if (robot)
+		{
+			robot->setParticleFilterOn(!robot->getParticleFilterOn());
 		}
 	}
 	/**

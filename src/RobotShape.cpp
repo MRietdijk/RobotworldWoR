@@ -94,7 +94,10 @@ namespace View
 
 		drawLaser( dc);
 
-		drawParticles(dc);
+		if (getRobot()->getParticleFilterOn() && getRobot()->isDriving()) {
+			drawLidar(dc);
+			drawParticles(dc);
+		}
 	}
 	/**
 	 *
@@ -261,11 +264,6 @@ namespace View
 				dc.DrawCircle( d.point, 1);
 			}
 		}
-		for (const Model::DistancePercept &d : getRobot()->currentLidarPointCloud)
-		{
-			dc.SetPen( wxPen(  "Yellow", borderWidth, wxPENSTYLE_SOLID));
-			dc.DrawLine(getRobot()->getPosition(), d.point);
-		}
 	}
 
 	void RobotShape::drawParticles(wxDC& dc) {
@@ -273,6 +271,14 @@ namespace View
 
 		for (uint16_t i = 0; i < particles.size(); ++i) {
 			particles[i].draw(dc);
+		}
+	}
+
+	void RobotShape::drawLidar(wxDC& dc) {
+		for (const Model::DistancePercept &d : getRobot()->currentLidarPointCloud)
+		{
+			dc.SetPen( wxPen(  "Yellow", borderWidth, wxPENSTYLE_SOLID));
+			dc.DrawLine(getRobot()->getPosition(), d.point);
 		}
 	}
 } // namespace View

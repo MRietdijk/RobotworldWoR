@@ -48,7 +48,8 @@ namespace Model
 								speed( 0.0),
 								acting(false),
 								driving(false),
-								communicating(false)
+								communicating(false),
+								particleFilterOn(false)
 	{
 		std::shared_ptr< AbstractSensor > laserSensor = std::make_shared<LaserDistanceSensor>( *this);
 		std::shared_ptr< AbstractSensor> lidar = std::make_shared<Lidar>(*this, 10, 180);
@@ -489,7 +490,6 @@ namespace Model
 							currentRadarPointCloud.push_back(*distancePercept);
 						} else if (typeid(tempAbstractPercept) == typeid(DistancePercepts)) {
 							DistancePercepts* distancePercepts = dynamic_cast<DistancePercepts*>(percept.value().get());
-							std::cout << "DistancePercepts.size(): " << distancePercepts->pointCloud.size() << std::endl;
 							for (DistancePercept distancePercept : distancePercepts->pointCloud) {
 								if (!robotHasLidarData) {
 									robotWeight.push_back(Utils::Shape2DUtils::distance(position, distancePercept.point));
@@ -509,7 +509,7 @@ namespace Model
 					}
 				}
 
-				if (robotHasLidarData) {
+				if (robotHasLidarData && particleFilterOn) {
 					uint64_t totalWeight = 0;
 
 
@@ -673,6 +673,14 @@ namespace Model
 
 	std::vector<Particle> Robot::getParticles() const {
 		return this->particles;
+	}
+
+	void Robot::setParticleFilterOn(bool on) {
+		this->particleFilterOn = on;
+	}
+
+	bool Robot::getParticleFilterOn() const {
+		return this->particleFilterOn;
 	}
 
 } // namespace Model
