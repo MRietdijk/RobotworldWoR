@@ -6,7 +6,7 @@
 #include <string>
 #include "Widgets.hpp"
 
-typedef uint32_t particleWeightType;
+typedef double particleWeightType;
 class Particle
 {
 public:
@@ -15,7 +15,7 @@ public:
     Particle(const Particle& other);
     ~Particle();
     void draw(wxDC& dc);
-    void updateWeight(particleWeightType robotWeight);
+    void updateWeight(std::vector<particleWeightType> robotWeight);
     particleWeightType getWeight() const;
     std::string to_string();
     bool operator<(const Particle& other) const;

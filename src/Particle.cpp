@@ -25,29 +25,23 @@ Particle::~Particle()
 void Particle::draw(wxDC& dc) {
   dc.SetBrush(*wxGREEN_BRUSH);
   dc.SetPen( wxPen(  "GREEN", 2, wxPENSTYLE_SOLID));
-  if (weight >= 25000) {
-    dc.SetBrush(*wxRED_BRUSH);
-    dc.SetPen( wxPen(  "RED", 2, wxPENSTYLE_SOLID));  
-  }
   dc.DrawCircle(x, y, 3);
 }
 
-void Particle::updateWeight(particleWeightType robotWeight) {
+void Particle::updateWeight(std::vector<double> robotWeight) {
   wxPoint currPos(x, y);
-  int32_t tempWeight = 0;
+  int64_t tempWeight = 0;
 
   std::shared_ptr< Model::AbstractPercept > percepts = Model::Lidar::getPerceptFor(Model::Lidar::getStimulus(currPos, 180, 10), currPos);
   const Model::AbstractPercept& tempPercepts{*percepts.get()};
   if (typeid(tempPercepts) == typeid(Model::DistancePercepts)) {
     Model::DistancePercepts* distancePercepts = dynamic_cast<Model::DistancePercepts*>(percepts.get());
-    for (Model::DistancePercept& distancePercept : distancePercepts->pointCloud) {
-      tempWeight += Utils::Shape2DUtils::distance(currPos, distancePercept.point);
+    for (uint8_t i = 0; i < distancePercepts->pointCloud.size(); ++i) {
+      double distance = Utils::Shape2DUtils::distance(currPos, distancePercepts->pointCloud.at(i).point) - robotWeight.at(i);
+      tempWeight += std::abs(distance);
     }
   }
-
-  tempWeight -= robotWeight;
-  weight = std::abs(tempWeight);
-  std::cout << "Weight: " << weight << std::endl;
+  weight = tempWeight;
 }
 
 bool Particle::operator<(const Particle& other) const {

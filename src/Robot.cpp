@@ -467,12 +467,13 @@ namespace Model
 				position.x = vertex.x;
 				position.y = vertex.y;
 
+				std::vector<particleWeightType> robotWeight;
+				bool robotHasLidarData = false;
 
 				// Do the measurements / handle all percepts
 				// TODO There are race conditions here:
 				//			1. size() is not atomic
 				//			2. any percepts added after leaving the while will not be used during the belief update
-				particleWeightType robotWeight = 0;
 				while(perceptQueue.size() > 0)
 				{
 					std::optional< std::shared_ptr< AbstractPercept >> percept = perceptQueue.dequeue();
@@ -488,10 +489,15 @@ namespace Model
 							currentRadarPointCloud.push_back(*distancePercept);
 						} else if (typeid(tempAbstractPercept) == typeid(DistancePercepts)) {
 							DistancePercepts* distancePercepts = dynamic_cast<DistancePercepts*>(percept.value().get());
+							std::cout << "DistancePercepts.size(): " << distancePercepts->pointCloud.size() << std::endl;
 							for (DistancePercept distancePercept : distancePercepts->pointCloud) {
-								robotWeight += Utils::Shape2DUtils::distance(position, distancePercept.point);
+								if (!robotHasLidarData) {
+									robotWeight.push_back(Utils::Shape2DUtils::distance(position, distancePercept.point));
+
+								}
 								currentLidarPointCloud.push_back(distancePercept);
 							}
+							robotHasLidarData = true;
 						}
 						else
 						{
@@ -502,81 +508,66 @@ namespace Model
 						Application::Logger::log("Huh??");
 					}
 				}
-				uint64_t totalWeight = 0;
-				// Update the belief
+
+				if (robotHasLidarData) {
+					uint64_t totalWeight = 0;
 
 
-				std::vector<Particle> newParticles;
-				for (Particle& p : particles) {
-					p.updateWeight(robotWeight);
-					totalWeight += p.getWeight();
-					std::cout << "total weight: " << totalWeight << std::endl;
-				}
-				
-				std::sort(particles.begin(), particles.end());
-
-				for (Particle& p : particles) {
-					std::cout << "Particle without correct weight: " << p.to_string() << std::endl;
-				}
-
-				for (uint16_t i = 0; i < particles.size() / 2; ++i) {
-					particleWeightType weight = particles[i].getWeight();
-					particles[i].setWeight(particles[particles.size() - i - 1].getWeight());
-					particles[particles.size() - i - 1].setWeight(weight);
-				}
-
-				for (Particle& p : particles) {
-					std::cout << "Particle with correct weight: " << p.to_string() << std::endl;
-				}
-
-
-				for (uint16_t i = 0; i < particles.size() / 8; ++i) {
-					std::cout << "total weight: " << totalWeight << std::endl;
-					std::random_device rd{};
-					std::mt19937 gen{rd()};
-					std::uniform_int_distribution<> pickedWeight{0, totalWeight};
-					
-
-
-
-					uint64_t picked = pickedWeight(gen);
-
-					uint64_t weightSum = 0;
-
-					for (uint16_t i = 0; i < particles.size(); ++i) {
-						Particle& p = particles[i];
-						weightSum += p.getWeight();
-						if (weightSum >= picked) {
-							std::cout << "Getting Particle: " << p.to_string() << std::endl;
-							newParticles.push_back(p);
-							totalWeight -= p.getWeight();
-							particles.erase(i + particles.begin());
-							break;
-						}
+					std::vector<Particle> newParticles;
+					for (Particle& p : particles) {
+						p.updateWeight(robotWeight);
+						totalWeight += p.getWeight();
 					}
-				}
+					
+					std::sort(particles.begin(), particles.end());
 
-				for (Particle& p : newParticles) {
-					for (uint8_t i = 0; i < 8; ++i) {
+					for (uint16_t i = 0; i < particles.size() / 2; ++i) {
+						particleWeightType weight = particles[i].getWeight();
+						particles[i].setWeight(particles[particles.size() - i - 1].getWeight());
+						particles[particles.size() - i - 1].setWeight(weight);
+					}
+
+
+					for (uint16_t i = 0; i < particles.size() / 4; ++i) {
 						std::random_device rd{};
 						std::mt19937 gen{rd()};
-						std::uniform_int_distribution<> xDist{-10, 10};
-						std::uniform_int_distribution<> yDist{-10 , 10};
-
-						uint16_t x = p.getX() + xDist(gen);
-						uint16_t y = p.getY() + yDist(gen);
+						std::uniform_int_distribution<> pickedWeight{0, totalWeight};
 						
-						Particle newParticle(x, y);
-						newParticles.push_back(newParticle);
+
+
+
+						uint64_t picked = pickedWeight(gen);
+
+						uint64_t weightSum = 0;
+
+						for (uint16_t i = 0; i < particles.size(); ++i) {
+							Particle& p = particles[i];
+							weightSum += p.getWeight();
+							if (weightSum >= picked) {
+								newParticles.push_back(p);
+								totalWeight -= p.getWeight();
+								particles.erase(i + particles.begin());
+								break;
+							}
+						}
 					}
-				}
-				particles = newParticles;
 
-				for (Particle& p : particles) {
-					p.updateWeight(robotWeight);
-				}
+					for (Particle& p : newParticles) {
+						for (uint8_t i = 0; i < 4; ++i) {
+							std::random_device rd{};
+							std::mt19937 gen{rd()};
+							std::uniform_int_distribution<> xDist{-50, 50};
+							std::uniform_int_distribution<> yDist{-50 , 50};
 
-				// Resample
+							uint16_t x = p.getX() + xDist(gen);
+							uint16_t y = p.getY() + yDist(gen);
+							
+							Particle newParticle(x, y);
+							newParticles.push_back(newParticle);
+						}
+					}
+					particles = newParticles;
+				}
 
 				
 				// Stop on arrival or collision
