@@ -20,6 +20,7 @@
 #include <thread>
 #include "Particle.hpp"
 #include "AnglePercept.hpp"
+#include "RotationPercept.hpp"
 
 namespace Messaging
 {
@@ -263,6 +264,8 @@ namespace Model
 			PointCloud currentLidarPointCloud;
 
 			AnglePercept currentDegree;
+
+			RotationPercept currentDistanceMade;
 			/**
 			 * @brief returns the particles vector
 			 * 

@@ -16,6 +16,7 @@
 #include "WayPoint.hpp"
 #include "Lidar.hpp"
 #include "Compas.hpp"
+#include "Odometer.hpp"
 
 #include <chrono>
 #include <ctime>
@@ -55,9 +56,12 @@ namespace Model
 		std::shared_ptr< AbstractSensor > laserSensor = std::make_shared<LaserDistanceSensor>( *this);
 		std::shared_ptr< AbstractSensor> lidar = std::make_shared<Lidar>(*this, 10, 180);
 		std::shared_ptr< AbstractSensor> compas = std::make_shared<Compas>(*this, Utils::MathUtils::toRadians(2));
+		std::shared_ptr< AbstractSensor> odometer = std::make_shared<Odometer>(*this, 0.1);
+		
 		attachSensor( laserSensor);
 		attachSensor(lidar);
 		attachSensor(compas);
+		attachSensor(odometer);
 
 		// We use the real position for starters, not an estimated position.
 		startPosition = position;
@@ -503,8 +507,11 @@ namespace Model
 							robotHasLidarData = true;
 						} else if (typeid(tempAbstractPercept) == typeid(AnglePercept)) {
 							AnglePercept* anglePercept = dynamic_cast<AnglePercept*>(percept.value().get());
-							std::cout << "angle is: " << anglePercept->angle << std::endl;
 							currentDegree = *anglePercept;
+						} else if (typeid(tempAbstractPercept) == typeid(RotationPercept)) {
+							RotationPercept* rotationPercept = dynamic_cast<RotationPercept*>(percept.value().get());
+							std::cout << "Distance made: " << rotationPercept->rotations << std::endl;
+							currentDistanceMade = *rotationPercept;
 						}
 						else
 						{
