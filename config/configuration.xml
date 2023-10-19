@@ -1,0 +1,5 @@
+<properties>
+    <property name="stdev-compass" value="2"/>
+    <property name="stdev-odometer" value="0.1"/>
+    <property name="stdev-lidar" value="10"/>
+</properties>

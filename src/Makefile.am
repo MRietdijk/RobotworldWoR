@@ -42,7 +42,8 @@ robotworld_SOURCES 	= 	AbstractActuator.cpp	\
 						Particle.cpp			\
 						Lidar.cpp				\
 						Compas.cpp				\
-						Odometer.cpp
+						Odometer.cpp			\
+						Configuration.cpp
 
 
 robotworld_CPPFLAGS 	=	$(AM_CPPFLAGS) $(ROBOTWORLD_CPPFLAGS) $(WX_CPPFLAGS)

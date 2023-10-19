@@ -17,6 +17,8 @@
 #include "Lidar.hpp"
 #include "Compas.hpp"
 #include "Odometer.hpp"
+#include "KalmanFilter.hpp"
+#include "Configuration.hpp"
 
 #include <chrono>
 #include <ctime>
@@ -54,9 +56,9 @@ namespace Model
 								particleFilterOn(false)
 	{
 		std::shared_ptr< AbstractSensor > laserSensor = std::make_shared<LaserDistanceSensor>( *this);
-		std::shared_ptr< AbstractSensor> lidar = std::make_shared<Lidar>(*this, 10, 180);
-		std::shared_ptr< AbstractSensor> compas = std::make_shared<Compas>(*this, Utils::MathUtils::toRadians(2));
-		std::shared_ptr< AbstractSensor> odometer = std::make_shared<Odometer>(*this, 0.1);
+		std::shared_ptr< AbstractSensor> lidar = std::make_shared<Lidar>(*this, Configuration::getStdev("stdev-lidar"), 180);
+		std::shared_ptr< AbstractSensor> compas = std::make_shared<Compas>(*this, Utils::MathUtils::toRadians(Configuration::getStdev("stdev-compass")));
+		std::shared_ptr< AbstractSensor> odometer = std::make_shared<Odometer>(*this, Configuration::getStdev("stdev-odometer"));
 		
 		attachSensor( laserSensor);
 		attachSensor(lidar);
@@ -522,6 +524,12 @@ namespace Model
 						Application::Logger::log("Huh??");
 					}
 				}
+
+				// Kalman filter
+				Matrix<double, 2, 2> A{{1, 1}, {0, 1}};
+
+				const std::array<double, 2> sigmaArray = {Utils::MathUtils::toRadians(2), 0.1};
+				Matrix<double, 2, 2> sigma = KalmanFilter::getCovarianceMatrix(sigmaArray, false);
 
 				if (robotHasLidarData && particleFilterOn) {
 					uint64_t totalWeight = 0;
