@@ -510,6 +510,14 @@ namespace Application
 		wxGBSpan(1, 1),
 		wxGROW);
 
+		sizer->Add(makeCheckbox(panel, 
+								"Use KalmanFilter",
+								[this](wxCommandEvent& anEvent){this->OnKalmanFilter(anEvent);}
+		),
+		wxGBPosition(4, 4),
+		wxGBSpan(1, 1),
+		wxGROW);
+
 		panel->SetSizerAndFit( sizer);
 
 		if(MainApplication::isArgGiven("-debug_grid"))
@@ -764,11 +772,11 @@ namespace Application
 	}
 
 	void MainFrameWindow::OnParticleFilter( wxCommandEvent& UNUSEDPARAM(anEvent)) {
-		Model::RobotPtr robot = Model::RobotWorld::getRobotWorld().getRobot( "Robot");
-		if (robot)
-		{
-			robot->setParticleFilterOn(!robot->getParticleFilterOn());
-		}
+		Application::MainApplication::getSettings().setParticleFilterOn(!Application::MainApplication::getSettings().getParticleFilterOn());
+	}
+
+	void MainFrameWindow::OnKalmanFilter( wxCommandEvent& UNUSEDPARAM(anEvent)) {
+		Application::MainApplication::getSettings().setKalmanFilterOn(!Application::MainApplication::getSettings().getKalmanFilterOn());
 	}
 	/**
 	 *

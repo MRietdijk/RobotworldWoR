@@ -53,7 +53,7 @@ namespace Model
 								acting(false),
 								driving(false),
 								communicating(false),
-								particleFilterOn(false)
+								currentDistanceMade(0)
 	{
 		std::shared_ptr< AbstractSensor > laserSensor = std::make_shared<LaserDistanceSensor>( *this);
 		std::shared_ptr< AbstractSensor> lidar = std::make_shared<Lidar>(*this, Configuration::getStdev("stdev-lidar"), 180);
@@ -466,10 +466,17 @@ namespace Model
 
 			// We use the real position for starters, not an estimated position.
 			startPosition = position;
+			kalmanPositions.push_back(position);
 
 			unsigned pathPoint = 0;
+			Matrix<double, 2, 2> sigma{{1, 0}, {0, 1}};
+			Matrix<double, 2, 1> mu{{{0}}, {{0}}};
+			bool measurementsInitialized = false;
+			double prevAngle = Utils::Shape2DUtils::getAngle(this->getFront());
+
 			while (position.x > 0 && position.x < 900 && position.y > 0 && position.y < 900 && pathPoint < path.size()) // @suppress("Avoid magic numbers")
 			{
+				prevPosition = position;
 				// Do the update
 				currentLidarPointCloud.clear();
 				const PathAlgorithm::Vertex& vertex = path[pathPoint+=static_cast<unsigned int>(speed)];
@@ -479,6 +486,9 @@ namespace Model
 
 				std::vector<particleWeightType> robotWeight;
 				bool robotHasLidarData = false;
+				bool robotHasCompassData = false;
+				bool robotHasRotationData = false;
+
 
 				// Do the measurements / handle all percepts
 				// TODO There are race conditions here:
@@ -510,10 +520,13 @@ namespace Model
 						} else if (typeid(tempAbstractPercept) == typeid(AnglePercept)) {
 							AnglePercept* anglePercept = dynamic_cast<AnglePercept*>(percept.value().get());
 							currentDegree = *anglePercept;
+							robotHasCompassData = true;
 						} else if (typeid(tempAbstractPercept) == typeid(RotationPercept)) {
-							RotationPercept* rotationPercept = dynamic_cast<RotationPercept*>(percept.value().get());
-							std::cout << "Distance made: " << rotationPercept->rotations << std::endl;
-							currentDistanceMade = *rotationPercept;
+							if (!robotHasRotationData) {
+								RotationPercept* rotationPercept = dynamic_cast<RotationPercept*>(percept.value().get());
+								currentDistanceMade = rotationPercept->rotations;
+							}
+							robotHasRotationData = true;
 						}
 						else
 						{
@@ -525,13 +538,42 @@ namespace Model
 					}
 				}
 
-				// Kalman filter
-				Matrix<double, 2, 2> A{{1, 1}, {0, 1}};
 
-				const std::array<double, 2> sigmaArray = {Utils::MathUtils::toRadians(2), 0.1};
-				Matrix<double, 2, 2> sigma = KalmanFilter::getCovarianceMatrix(sigmaArray, false);
 
-				if (robotHasLidarData && particleFilterOn) {
+				if (Application::MainApplication::getSettings().getKalmanFilterOn() && robotHasRotationData && robotHasCompassData) {
+					// Kalman filter
+					Matrix<double, 2, 2> A{{1, 0}, {0, 1}};
+					Matrix<double, 2, 2> B{{1, 0}, {0, 1}};
+
+					const std::array<double, 2> sensorDeviation{Utils::MathUtils::toRadians(Configuration::getStdev("stdev-compass")), Configuration::getStdev("stdev-odometer")};
+					Matrix<double, 2, 2> sensorCovarianceMatrix = KalmanFilter::getCovarianceMatrix(sensorDeviation, false);
+
+					Matrix<double, 2, 1> measurements{ {{currentDegree.angle}}, {{currentDistanceMade}}};
+					if (!measurementsInitialized) {
+						mu = measurements;
+						measurementsInitialized = true;
+					}
+					Matrix<double, 2, 1> update{ {{ Utils::Shape2DUtils::getAngle(this->getFront()) - prevAngle }}, {{ 0 }} };
+					
+					prevAngle = Utils::Shape2DUtils::getAngle(this->getFront());
+
+					Matrix<double, 2, 1> calculatedMu = KalmanFilter::getCalculatedMu(mu, update, A, B);
+					Matrix<double, 2, 2> calculatedSigma = KalmanFilter::getCalculatedSigma(A, sigma, false);
+					Matrix<double, 2, 2> kalmanGain = KalmanFilter::getKalmanGain(calculatedSigma, sensorCovarianceMatrix, false);
+					sigma = KalmanFilter::calculateSigma(calculatedSigma, kalmanGain);
+					mu = KalmanFilter::calculateMu(calculatedMu, kalmanGain, measurements);
+					
+					uint16_t x = mu.at(1).at(0) * std::cos(mu.at(0).at(0)) + kalmanPositions.back().x;
+					uint16_t y = mu.at(1).at(0) * std::sin(mu.at(0).at(0)) + kalmanPositions.back().y;
+
+					wxPoint p(x, y);
+
+					kalmanPositions.push_back(p);
+				}
+
+
+
+				if (robotHasLidarData && Application::MainApplication::getSettings().getParticleFilterOn()) {
 					uint64_t totalWeight = 0;
 
 
@@ -695,14 +737,6 @@ namespace Model
 
 	std::vector<Particle> Robot::getParticles() const {
 		return this->particles;
-	}
-
-	void Robot::setParticleFilterOn(bool on) {
-		this->particleFilterOn = on;
-	}
-
-	bool Robot::getParticleFilterOn() const {
-		return this->particleFilterOn;
 	}
 
 } // namespace Model

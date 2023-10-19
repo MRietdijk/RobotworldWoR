@@ -153,6 +153,8 @@ namespace View
 			void drawLaser( wxDC& dc);
 
 			void drawLidar(wxDC& dc);
+
+			void drawKalmanPositions(wxDC& dc);
 	};
 } // namespace View
 #endif // ROBOTSHAPE_HPP_

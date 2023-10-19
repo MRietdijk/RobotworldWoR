@@ -90,6 +90,11 @@ namespace Model
 			{
 				return position;
 			}
+
+			wxPoint getPrevPosition() const
+			{
+				return prevPosition;
+			}
 			/**
 			 *
 			 */
@@ -246,10 +251,6 @@ namespace Model
 			 */
 			virtual std::string asDebugString() const override;
 			//@}
-
-			void setParticleFilterOn(bool on);
-
-			bool getParticleFilterOn() const;
 			/**
 			 * @name Variables for painting the sensor activity on the screen
 			 */
@@ -265,7 +266,9 @@ namespace Model
 
 			AnglePercept currentDegree;
 
-			RotationPercept currentDistanceMade;
+			double currentDistanceMade;
+
+			std::vector<wxPoint> kalmanPositions;
 			/**
 			 * @brief returns the particles vector
 			 * 
@@ -353,7 +356,8 @@ namespace Model
 			 */
 			Messaging::ServerPtr server;
 			std::vector<Particle> particles;
-			bool particleFilterOn;
+
+			wxPoint prevPosition;
 	};
 } // namespace Model
 #endif // ROBOT_HPP_

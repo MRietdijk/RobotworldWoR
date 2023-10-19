@@ -94,9 +94,13 @@ namespace View
 
 		drawLaser( dc);
 
-		if (getRobot()->getParticleFilterOn() && getRobot()->isDriving()) {
+		if (Application::MainApplication::getSettings().getParticleFilterOn() && getRobot()->isDriving()) {
 			drawLidar(dc);
 			drawParticles(dc);
+		}
+
+		if (Application::MainApplication::getSettings().getKalmanFilterOn()) {
+			drawKalmanPositions(dc);
 		}
 	}
 	/**
@@ -279,6 +283,14 @@ namespace View
 		{
 			dc.SetPen( wxPen(  "Yellow", borderWidth, wxPENSTYLE_SOLID));
 			dc.DrawLine(getRobot()->getPosition(), d.point);
+		}
+	}
+
+	void RobotShape::drawKalmanPositions(wxDC& dc) {
+		for (const wxPoint &p : getRobot()->kalmanPositions)
+		{
+			dc.SetPen( wxPen(  "Blue", borderWidth, wxPENSTYLE_SOLID));
+			dc.DrawCircle(p, 3);
 		}
 	}
 } // namespace View

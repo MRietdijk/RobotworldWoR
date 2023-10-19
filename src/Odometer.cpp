@@ -1,5 +1,6 @@
 #include "Odometer.hpp"
 #include <random>
+#include "Shape2DUtils.hpp"
 
 namespace Model {
     Odometer::Odometer(Robot& robot, const double stdev): AbstractSensor(robot), stdev(stdev)
@@ -13,7 +14,7 @@ namespace Model {
         Robot* robot = dynamic_cast<Robot*>(agent);
         
         if (robot) {
-            double newRotations = robot->getSpeed() + noise(gen);
+            double newRotations = Utils::Shape2DUtils::distance(robot->getPrevPosition(), robot->getPosition()) + noise(gen);
 
             return std::make_shared<RotationStimulus>(newRotations);
         }

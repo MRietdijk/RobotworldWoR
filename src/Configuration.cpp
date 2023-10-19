@@ -11,7 +11,6 @@ namespace Configuration
         std::ifstream file(filename);
         std::stringstream buffer;
         buffer << file.rdbuf();
-        file.close();
         
         boost::property_tree::ptree pt;
         boost::property_tree::read_xml(buffer, pt);
