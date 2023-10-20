@@ -312,10 +312,10 @@ namespace Model
 	void RobotWorld::makeWorldTwo() {
 		RobotWorld::getRobotWorld().newRobot( "Robot", wxPoint(163,111),false);
 		RobotWorld::getRobotWorld().newWall( wxPoint(7,234), wxPoint(419,234) ,false);
-		RobotWorld::getRobotWorld().newWall( wxPoint(7,234), wxPoint(419,234) ,false);
-		RobotWorld::getRobotWorld().newWall( wxPoint(7,234), wxPoint(419,234) ,false);
-		RobotWorld::getRobotWorld().newWall( wxPoint(7,234), wxPoint(419,234) ,false);
-		RobotWorld::getRobotWorld().newGoal( "Goal", wxPoint(320,285),false);
+		RobotWorld::getRobotWorld().newWall( wxPoint(430,234), wxPoint(430,400) ,false);
+		RobotWorld::getRobotWorld().newWall( wxPoint(440, 400), wxPoint(600,500) ,false);
+		RobotWorld::getRobotWorld().newWall( wxPoint(600,4), wxPoint(800,500) ,false);
+		RobotWorld::getRobotWorld().newGoal( "Goal", wxPoint(700,600),false);
 
 		notifyObservers();
 	}

@@ -700,7 +700,7 @@ namespace Application
 			}
 			case 2:
 			{
-				TRACE_DEVELOP("Please create your own student world 2");
+				Model::RobotWorld::getRobotWorld().makeWorldTwo();
 				break;
 			}
 			default:
