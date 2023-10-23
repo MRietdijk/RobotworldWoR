@@ -88,14 +88,17 @@ namespace View
 			drawOpenSet( dc);
 		}
 
+		if (Application::MainApplication::getSettings().getParticleFilterOn()) {
+			drawLidar(dc);
+		}
+
 		drawPath( dc);
 
 		drawRobot( dc);
 
 		drawLaser( dc);
 
-		if (Application::MainApplication::getSettings().getParticleFilterOn() && getRobot()->isDriving()) {
-			drawLidar(dc);
+		if (Application::MainApplication::getSettings().getParticleFilterOn()) {
 			drawParticles(dc);
 		}
 

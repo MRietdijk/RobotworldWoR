@@ -10,7 +10,7 @@ namespace Model {
     std::shared_ptr< AbstractStimulus > Odometer::getStimulus() const {
         std::random_device rd{};
         std::mt19937 gen{rd()};
-        std::normal_distribution<> noise{-stdev, stdev};
+        std::normal_distribution<> noise{0, stdev};
         Robot* robot = dynamic_cast<Robot*>(agent);
         
         if (robot) {

@@ -5,6 +5,8 @@
 #include "DistancePercepts.hpp"
 #include "Lidar.hpp"
 #include "Shape2DUtils.hpp"
+#include "Configuration.hpp"
+#include <random>
 
 Particle::Particle() : x(std::rand() % 900), y(std::rand() % 900), weight(0)
 {
@@ -42,6 +44,15 @@ void Particle::updateWeight(std::vector<double> robotWeight) {
     }
   }
   weight = tempWeight;
+}
+
+void Particle::updatePosition(int8_t x, int8_t y) {
+  std::random_device rd{};
+  std::mt19937 gen{rd()};
+  std::normal_distribution<> noise{0, 1};
+
+  this->x += x + noise(gen);
+  this->y += y + noise(gen);
 }
 
 bool Particle::operator<(const Particle& other) const {

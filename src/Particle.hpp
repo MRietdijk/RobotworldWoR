@@ -16,6 +16,7 @@ public:
     ~Particle();
     void draw(wxDC& dc);
     void updateWeight(std::vector<particleWeightType> robotWeight);
+    void updatePosition(int8_t x, int8_t y);
     particleWeightType getWeight() const;
     std::string to_string();
     bool operator<(const Particle& other) const;

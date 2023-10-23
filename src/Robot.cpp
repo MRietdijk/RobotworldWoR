@@ -508,12 +508,10 @@ namespace Model
 							DistancePercept* distancePercept = dynamic_cast<DistancePercept*>(percept.value().get());
 							currentRadarPointCloud.push_back(*distancePercept);
 						} else if (typeid(tempAbstractPercept) == typeid(DistancePercepts)) {
+							robotWeight.clear();
 							DistancePercepts* distancePercepts = dynamic_cast<DistancePercepts*>(percept.value().get());
 							for (DistancePercept distancePercept : distancePercepts->pointCloud) {
-								if (!robotHasLidarData) {
-									robotWeight.push_back(Utils::Shape2DUtils::distance(position, distancePercept.point));
-
-								}
+								robotWeight.push_back(Utils::Shape2DUtils::distance(position, distancePercept.point));
 								currentLidarPointCloud.push_back(distancePercept);
 							}
 							robotHasLidarData = true;
@@ -522,10 +520,8 @@ namespace Model
 							currentDegree = *anglePercept;
 							robotHasCompassData = true;
 						} else if (typeid(tempAbstractPercept) == typeid(RotationPercept)) {
-							if (!robotHasRotationData) {
-								RotationPercept* rotationPercept = dynamic_cast<RotationPercept*>(percept.value().get());
-								currentDistanceMade = rotationPercept->rotations;
-							}
+							RotationPercept* rotationPercept = dynamic_cast<RotationPercept*>(percept.value().get());
+							currentDistanceMade = rotationPercept->rotations;
 							robotHasRotationData = true;
 						}
 						else
@@ -574,15 +570,14 @@ namespace Model
 
 
 				if (robotHasLidarData && Application::MainApplication::getSettings().getParticleFilterOn()) {
-					uint64_t totalWeight = 0;
+					int8_t xDiff = position.x - prevPosition.x;
+					int8_t yDiff = position.y - prevPosition.y;
 
-
-					std::vector<Particle> newParticles;
-					for (Particle& p : particles) {
-						p.updateWeight(robotWeight);
-						totalWeight += p.getWeight();
+					for (Particle& particle : particles) {
+						particle.updatePosition(xDiff, yDiff);
+						particle.updateWeight(robotWeight);
 					}
-					
+
 					std::sort(particles.begin(), particles.end());
 
 					for (uint16_t i = 0; i < particles.size() / 2; ++i) {
@@ -591,43 +586,26 @@ namespace Model
 						particles[particles.size() - i - 1].setWeight(weight);
 					}
 
+					std::vector<particleWeightType> particleWeights;
 
-					for (uint16_t i = 0; i < particles.size() / 4; ++i) {
-						std::random_device rd{};
-						std::mt19937 gen{rd()};
-						std::uniform_int_distribution<> pickedWeight{0, totalWeight};
-						
+					for (Particle& particle : particles) {
+						particleWeights.push_back(particle.getWeight());
+					}
+					std::random_device rd{};
+					std::mt19937 gen{rd()};
+					std::discrete_distribution<> d{particleWeights.begin(), particleWeights.end()};
 
+					std::map<uint16_t, uint16_t> pickedParticles;
 
-
-						uint64_t picked = pickedWeight(gen);
-
-						uint64_t weightSum = 0;
-
-						for (uint16_t i = 0; i < particles.size(); ++i) {
-							Particle& p = particles[i];
-							weightSum += p.getWeight();
-							if (weightSum >= picked) {
-								newParticles.push_back(p);
-								totalWeight -= p.getWeight();
-								particles.erase(i + particles.begin());
-								break;
-							}
-						}
+					for (uint16_t i = 0; i < particles.size(); ++i) {
+						++pickedParticles[d(gen)];
 					}
 
-					for (Particle& p : newParticles) {
-						for (uint8_t i = 0; i < 4; ++i) {
-							std::random_device rd{};
-							std::mt19937 gen{rd()};
-							std::uniform_int_distribution<> xDist{-50, 50};
-							std::uniform_int_distribution<> yDist{-50 , 50};
+					std::vector<Particle> newParticles;
 
-							uint16_t x = p.getX() + xDist(gen);
-							uint16_t y = p.getY() + yDist(gen);
-							
-							Particle newParticle(x, y);
-							newParticles.push_back(newParticle);
+					for (const auto& [num, count] : pickedParticles) {
+						for (uint16_t i = 0; i < count; ++i) {
+							newParticles.push_back(particles[num]);
 						}
 					}
 					particles = newParticles;
