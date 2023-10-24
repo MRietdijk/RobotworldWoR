@@ -44,7 +44,7 @@ namespace Model
 	 *
 	 */
 	Robot::Robot(	const std::string& aName,
-					const wxPoint& aPosition, uint16_t particleCount /* = 1000 */) :
+					const wxPoint& aPosition) :
 								name( aName),
 								size( wxDefaultSize),
 								position( aPosition),
@@ -69,11 +69,6 @@ namespace Model
 		startPosition = position;
 
 		// make count of particles
-		for (uint16_t i = 0; i < particleCount; ++i) {
-			Particle p;
-
-			particles.push_back(p);
-		}
 	}
 	/**
 	 *
@@ -450,6 +445,11 @@ namespace Model
 	{
 		try
 		{
+			for (uint16_t i = 0; i < (uint16_t)Configuration::getVariable("particle-count"); ++i) {
+				Particle p;
+
+				particles.push_back(p);
+			}
 			for (std::shared_ptr< AbstractSensor > sensor : sensors)
 			{
 				sensor->setOn();
