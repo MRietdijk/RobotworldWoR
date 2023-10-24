@@ -470,9 +470,8 @@ namespace Model
 
 			unsigned pathPoint = 0;
 			Matrix<double, 2, 2> sigma{{1, 0}, {0, 1}};
-			Matrix<double, 2, 1> mu{{{0}}, {{0}}};
-			bool measurementsInitialized = false;
-			double prevAngle = Utils::Shape2DUtils::getAngle(this->getFront());
+			Matrix<double, 2, 1> mu{{{position.x}}, {{position.y}}};
+			double prevDistance = 0;
 
 			while (position.x > 0 && position.x < 900 && position.y > 0 && position.y < 900 && pathPoint < path.size()) // @suppress("Avoid magic numbers")
 			{
@@ -540,29 +539,25 @@ namespace Model
 					// Kalman filter
 					Matrix<double, 2, 2> A{{1, 0}, {0, 1}};
 					Matrix<double, 2, 2> B{{1, 0}, {0, 1}};
-
+					double deltaX = (currentDistanceMade - prevDistance) * std::cos(currentDegree.angle);
+					double deltaY = (currentDistanceMade - prevDistance) * std::sin(currentDegree.angle);
+					double x = mu.at(0).at(0) + deltaX;
+					double y = mu.at(1).at(0) + deltaY;
+					
 					const std::array<double, 2> sensorDeviation{Utils::MathUtils::toRadians(Configuration::getStdev("stdev-compass")), Configuration::getStdev("stdev-odometer")};
 					Matrix<double, 2, 2> sensorCovarianceMatrix = KalmanFilter::getCovarianceMatrix(sensorDeviation, false);
 
-					Matrix<double, 2, 1> measurements{ {{currentDegree.angle}}, {{currentDistanceMade}}};
-					if (!measurementsInitialized) {
-						mu = measurements;
-						measurementsInitialized = true;
-					}
-					Matrix<double, 2, 1> update{ {{ Utils::Shape2DUtils::getAngle(this->getFront()) - prevAngle }}, {{ 0 }} };
+					Matrix<double, 2, 1> measurements{ {{ x }}, {{ y }}};
 					
-					prevAngle = Utils::Shape2DUtils::getAngle(this->getFront());
+					Matrix<double, 2, 1> update{ {{ deltaX }}, {{ deltaY }} };
 
 					Matrix<double, 2, 1> calculatedMu = KalmanFilter::getCalculatedMu(mu, update, A, B);
 					Matrix<double, 2, 2> calculatedSigma = KalmanFilter::getCalculatedSigma(A, sigma, false);
 					Matrix<double, 2, 2> kalmanGain = KalmanFilter::getKalmanGain(calculatedSigma, sensorCovarianceMatrix, false);
 					sigma = KalmanFilter::calculateSigma(calculatedSigma, kalmanGain);
 					mu = KalmanFilter::calculateMu(calculatedMu, kalmanGain, measurements);
-					
-					uint16_t x = mu.at(1).at(0) * std::cos(mu.at(0).at(0)) + kalmanPositions.back().x;
-					uint16_t y = mu.at(1).at(0) * std::sin(mu.at(0).at(0)) + kalmanPositions.back().y;
 
-					wxPoint p(x, y);
+					wxPoint p(mu.at(0).at(0), mu.at(1).at(0));
 
 					kalmanPositions.push_back(p);
 				}
