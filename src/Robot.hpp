@@ -266,8 +266,6 @@ namespace Model
 
 			AnglePercept currentDegree;
 
-			double currentDistanceMade;
-
 			std::vector<wxPoint> kalmanPositions;
 			/**
 			 * @brief returns the particles vector
@@ -356,6 +354,7 @@ namespace Model
 			 */
 			Messaging::ServerPtr server;
 			std::vector<Particle> particles;
+			double currentDistanceMade;
 
 			wxPoint prevPosition;
 	};

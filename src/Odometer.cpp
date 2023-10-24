@@ -18,6 +18,8 @@ namespace Model {
 
             return std::make_shared<RotationStimulus>(newRotations);
         }
+
+        return std::make_shared<RotationStimulus>(0);
     }
     
     

@@ -2,4 +2,6 @@
     <property name="stdev-compass" value="2"/>
     <property name="stdev-odometer" value="0.1"/>
     <property name="stdev-lidar" value="10"/>
+    <property name="max-x-map" value="900"/>
+    <property name="max-y-map" value="900"/> 
 </properties>

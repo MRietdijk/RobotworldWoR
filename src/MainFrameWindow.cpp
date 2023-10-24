@@ -19,6 +19,7 @@
 #include "StdOutTraceFunction.hpp"
 #include "Trace.hpp"
 #include "WidgetTraceFunction.hpp"
+#include "Configuration.hpp"
 
 #include <array>
 #include <iostream>
@@ -183,7 +184,7 @@ namespace Application
 					wxGBPosition( 1, 1),
 					wxGBSpan( 1, 1),
 					wxSHRINK);
-		robotWorldCanvas->SetMinSize( wxSize( 900,900));
+		robotWorldCanvas->SetMinSize( wxSize((uint16_t)Configuration::getVariable("max-x-map"), (uint16_t)Configuration::getVariable("max-y-map")));
 
 		sizer->Add( 5, 5,
 					wxGBPosition( 2, 2),

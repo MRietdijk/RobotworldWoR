@@ -4,7 +4,7 @@
 #include <string>
 
 namespace Configuration {
-    double getStdev(std::string variableName);
+    double getVariable(std::string variableName);
 }
 
 #endif // CONFIGURATION_HPP__

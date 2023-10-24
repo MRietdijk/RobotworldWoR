@@ -7,8 +7,9 @@
 #include "Shape2DUtils.hpp"
 #include "Configuration.hpp"
 #include <random>
+#include "Configuration.hpp"
 
-Particle::Particle() : x(std::rand() % 900), y(std::rand() % 900), weight(0)
+Particle::Particle() : x((uint16_t)std::rand() % (uint16_t)Configuration::getVariable("max-x-map")), y((uint16_t)std::rand() % (uint16_t)Configuration::getVariable("max-y-map")), weight(0)
 {
 }
 
@@ -32,7 +33,7 @@ void Particle::draw(wxDC& dc) {
 
 void Particle::updateWeight(std::vector<double> robotWeight) {
   wxPoint currPos(x, y);
-  int64_t tempWeight = 0;
+  particleWeightType tempWeight = 0;
 
   std::shared_ptr< Model::AbstractPercept > percepts = Model::Lidar::getPerceptFor(Model::Lidar::getStimulus(currPos, 180, 10), currPos);
   const Model::AbstractPercept& tempPercepts{*percepts.get()};
@@ -49,10 +50,10 @@ void Particle::updateWeight(std::vector<double> robotWeight) {
 void Particle::updatePosition(int8_t x, int8_t y) {
   std::random_device rd{};
   std::mt19937 gen{rd()};
-  std::normal_distribution<> noise{0, 1};
+  std::normal_distribution<> noise{0, 2};
 
-  this->x += x + noise(gen);
-  this->y += y + noise(gen);
+  this->x = (uint16_t)std::clamp((this->x + (x + (int8_t)noise(gen))), 0, (int)Configuration::getVariable("max-x-map"));
+  this->y = (uint16_t)std::clamp((this->y + (y + (int8_t)noise(gen))), 0, (int)Configuration::getVariable("max-y-map"));
 }
 
 bool Particle::operator<(const Particle& other) const {

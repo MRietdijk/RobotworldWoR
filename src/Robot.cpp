@@ -56,9 +56,9 @@ namespace Model
 								currentDistanceMade(0)
 	{
 		std::shared_ptr< AbstractSensor > laserSensor = std::make_shared<LaserDistanceSensor>( *this);
-		std::shared_ptr< AbstractSensor> lidar = std::make_shared<Lidar>(*this, Configuration::getStdev("stdev-lidar"), 180);
-		std::shared_ptr< AbstractSensor> compas = std::make_shared<Compas>(*this, Utils::MathUtils::toRadians(Configuration::getStdev("stdev-compass")));
-		std::shared_ptr< AbstractSensor> odometer = std::make_shared<Odometer>(*this, Configuration::getStdev("stdev-odometer"));
+		std::shared_ptr< AbstractSensor> lidar = std::make_shared<Lidar>(*this, Configuration::getVariable("stdev-lidar"), 180);
+		std::shared_ptr< AbstractSensor> compas = std::make_shared<Compas>(*this, Utils::MathUtils::toRadians(Configuration::getVariable("stdev-compass")));
+		std::shared_ptr< AbstractSensor> odometer = std::make_shared<Odometer>(*this, Configuration::getVariable("stdev-odometer"));
 		
 		attachSensor( laserSensor);
 		attachSensor(lidar);
@@ -466,13 +466,11 @@ namespace Model
 
 			// We use the real position for starters, not an estimated position.
 			startPosition = position;
-			kalmanPositions.push_back(position);
 
 			unsigned pathPoint = 0;
 			Matrix<double, 2, 2> sigma{{1, 0}, {0, 1}};
-			Matrix<double, 2, 1> mu{{{position.x}}, {{position.y}}};
+			Matrix<double, 2, 1> mu{{{static_cast<double>(position.x)}}, {{static_cast<double>(position.y)}}};
 			double prevDistance = 0;
-
 			while (position.x > 0 && position.x < 900 && position.y > 0 && position.y < 900 && pathPoint < path.size()) // @suppress("Avoid magic numbers")
 			{
 				prevPosition = position;
@@ -544,7 +542,7 @@ namespace Model
 					double x = mu.at(0).at(0) + deltaX;
 					double y = mu.at(1).at(0) + deltaY;
 					
-					const std::array<double, 2> sensorDeviation{Utils::MathUtils::toRadians(Configuration::getStdev("stdev-compass")), Configuration::getStdev("stdev-odometer")};
+					const std::array<double, 2> sensorDeviation{Utils::MathUtils::toRadians(Configuration::getVariable("stdev-compass")), Configuration::getVariable("stdev-odometer")};
 					Matrix<double, 2, 2> sensorCovarianceMatrix = KalmanFilter::getCovarianceMatrix(sensorDeviation, false);
 
 					Matrix<double, 2, 1> measurements{ {{ x }}, {{ y }}};
@@ -557,7 +555,7 @@ namespace Model
 					sigma = KalmanFilter::calculateSigma(calculatedSigma, kalmanGain);
 					mu = KalmanFilter::calculateMu(calculatedMu, kalmanGain, measurements);
 
-					wxPoint p(mu.at(0).at(0), mu.at(1).at(0));
+					wxPoint p(static_cast<uint16_t>(mu.at(0).at(0)), static_cast<uint16_t>(mu.at(1).at(0)));
 
 					kalmanPositions.push_back(p);
 				}
@@ -565,8 +563,8 @@ namespace Model
 
 
 				if (robotHasLidarData && Application::MainApplication::getSettings().getParticleFilterOn()) {
-					int8_t xDiff = position.x - prevPosition.x;
-					int8_t yDiff = position.y - prevPosition.y;
+					int8_t xDiff = (int8_t)(position.x - prevPosition.x);
+					int8_t yDiff = (int8_t)(position.y - prevPosition.y);
 
 					for (Particle& particle : particles) {
 						particle.updatePosition(xDiff, yDiff);
@@ -593,7 +591,7 @@ namespace Model
 					std::map<uint16_t, uint16_t> pickedParticles;
 
 					for (uint16_t i = 0; i < particles.size(); ++i) {
-						++pickedParticles[d(gen)];
+						++pickedParticles[(uint16_t)d(gen)];
 					}
 
 					std::vector<Particle> newParticles;

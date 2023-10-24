@@ -6,7 +6,7 @@
 
 namespace Configuration
 {
-    double getStdev(std::string variableName) {
+    double getVariable(std::string variableName) {
         std::string filename = "../config/configuration.xml";
         std::ifstream file(filename);
         std::stringstream buffer;

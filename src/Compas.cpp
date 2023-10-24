@@ -23,6 +23,8 @@ namespace Model {
 
             return std::make_shared<AngleStimulus>(front);
         }
+
+        return std::make_shared<AngleStimulus>(BoundedVector(0, 0));
     }
 
     std::shared_ptr< AbstractPercept > Compas::getPerceptFor( std::shared_ptr< AbstractStimulus > anAbstractStimulus) const {
