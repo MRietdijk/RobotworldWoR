@@ -535,6 +535,9 @@ namespace Model
 
 				if (Application::MainApplication::getSettings().getKalmanFilterOn() && robotHasRotationData && robotHasCompassData) {
 					// Kalman filter
+					std::random_device rd{};
+					std::mt19937 gen{rd()};
+					std::normal_distribution<> noise{0, 5}; // some noise to make kalman gain not 0
 					Matrix<double, 2, 2> A{{1, 0}, {0, 1}};
 					Matrix<double, 2, 2> B{{1, 0}, {0, 1}};
 					double deltaX = (currentDistanceMade - prevDistance) * std::cos(currentDegree.angle);
@@ -545,7 +548,7 @@ namespace Model
 					const std::array<double, 2> sensorDeviation{Utils::MathUtils::toRadians(Configuration::getVariable("stdev-compass")), Configuration::getVariable("stdev-odometer")};
 					Matrix<double, 2, 2> sensorCovarianceMatrix = KalmanFilter::getCovarianceMatrix(sensorDeviation, false);
 
-					Matrix<double, 2, 1> measurements{ {{ x }}, {{ y }}};
+					Matrix<double, 2, 1> measurements{ {{ noise(gen) + x }}, {{ noise(gen) + y }}};
 					
 					Matrix<double, 2, 1> update{ {{ deltaX }}, {{ deltaY }} };
 
