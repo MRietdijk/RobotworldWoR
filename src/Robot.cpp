@@ -537,7 +537,7 @@ namespace Model
 					// Kalman filter
 					std::random_device rd{};
 					std::mt19937 gen{rd()};
-					std::normal_distribution<> noise{0, 5}; // some noise to make kalman gain not 0
+					std::normal_distribution<> noise{0, 5}; // some noise to make kalman gain not 0 (adds to measurement)
 					Matrix<double, 2, 2> A{{1, 0}, {0, 1}};
 					Matrix<double, 2, 2> B{{1, 0}, {0, 1}};
 					double deltaX = (currentDistanceMade - prevDistance) * std::cos(currentDegree.angle);
